@@ -55,7 +55,7 @@ def connected_component_subgraphs(G):
 def majority_strand(df_merged):
     strand = '+'
     list_str_strand = df_merged['strand'].astype(str).tolist()
-    if list_str_strand.count('-1') > list_str_strand.count('1'):
+    if list_str_strand.count('-') > list_str_strand.count('+'):
         strand = '-'
     return strand
 
@@ -195,14 +195,14 @@ def check_breakpoint_direction(df_check):
             list_mergeid = df_check[l1]['mergeid'].tolist()
             list_check = df_check[l1]['strand'].tolist()
 
-            if list_check[0] == 1 and list_check[1] == 1:
+            if list_check[0] == '+' and list_check[1] == '+':
                 list_5 = df_check[l1]['ovl_5end'].tolist()
                 list_3 = df_check[l1]['ovl_3end'].tolist()
                 if list_3[0] == 1 and list_5[1] == 1:
                     pair = (list_mergeid[0], list_mergeid[1], '+_+' , True)
                     list_pairs.append(pair)
 
-            if list_check[0] == -1 and list_check[1] == -1:
+            if list_check[0] == '-' and list_check[1] == '-':
                 list_5 = df_check[l1]['ovl_5end'].tolist()
                 list_3 = df_check[l1]['ovl_3end'].tolist()
                 if list_3[1] == 1 and list_5[0] == 1:
@@ -210,7 +210,7 @@ def check_breakpoint_direction(df_check):
                     list_pairs.append(pair)
 
 
-            if list_check[0] == -1 and list_check[1] == 1:
+            if list_check[0] == '-' and list_check[1] == '+':
                 list_5 = df_check[l1]['ovl_5end'].tolist()
                 list_3 = df_check[l1]['ovl_3end'].tolist()
                 if list_5[0] == 1 and list_5[1] == 1:
@@ -218,7 +218,7 @@ def check_breakpoint_direction(df_check):
                     list_pairs.append(pair)
 
 
-            if list_check[0] == 1 and list_check[1] == -1:
+            if list_check[0] == '+' and list_check[1] == '-':
                 list_5 = df_check[l1]['ovl_5end'].tolist()
                 list_3 = df_check[l1]['ovl_3end'].tolist()
                 if list_3[0] == 1 and list_3[1] == 1:
@@ -427,8 +427,8 @@ def main(args):
         trim_sup = readTrim.query('order>0')
 
         list_dfs = []
-        l1 = trim_sup['strand'] == 1
-        l2 = trim_sup['strand'] == -1
+        l1 = trim_sup['strand'] == '+'
+        l2 = trim_sup['strand'] == '-'
         trim_sup_plus = trim_sup[l1][['ref','r_start','r_start','readid']]
         trim_sup_plus.columns = [0,1,2,3]
         trim_sup_plus[2] = trim_sup_plus[2].apply(lambda x: x + 5)
@@ -508,14 +508,14 @@ def main(args):
             if len(filtered_df) > 0:
                 filtered_df.to_csv(filtered_region_depth_path, mode='a', sep='\t', header=None, index=None)
 
-        filtered_region_depth_bed = bt.BedTool(filtered_region_depth_path)
+        filtered_region_depth_bed = bt.BedTool(filtered_region_depth_path).sort()
         merged_filtered_region_depth = filtered_region_depth_bed.merge()
 
         trim_sup = readTrim.query('order>0')
 
         list_dfs = []
-        l1 = trim_sup['strand'] == 1
-        l2 = trim_sup['strand'] == -1
+        l1 = trim_sup['strand'] == '+'
+        l2 = trim_sup['strand'] == '-'
         trim_sup_plus = trim_sup[l1][['ref','r_start','r_start','readid']]
         trim_sup_plus.columns = [0,1,2,3]
         trim_sup_plus[2] = trim_sup_plus[2].apply(lambda x: x + 5)
