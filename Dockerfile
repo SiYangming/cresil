@@ -4,7 +4,7 @@ USER root
 
 LABEL maintainer="cresil"
 LABEL description="CReSIL: Accurate Identification of Extrachromosomal Circular DNA from Long-read Sequences"
-LABEL version="1.2.1"
+LABEL version="1.2.2"
 
 WORKDIR /app
 

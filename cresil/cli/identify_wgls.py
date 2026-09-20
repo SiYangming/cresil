@@ -412,6 +412,7 @@ def main(args):
     ord_header = ['ref', 'r_start', 'r_end', 'readid', 'q_start', 'q_end', 'match',
                   'mapBlock', 'mapq', 'strand', 'qlenTrimmed', 'freqCov', 'order']
     readTrim = readTrim.loc[:,ord_header]
+    readTrim['strand'] = readTrim['strand'].map(lambda x: '+' if str(x) == '1' else '-' if str(x) == '-1' else str(x))
 
     ## prepare aligned reads
     aln_reads = bt.BedTool.from_dataframe(readTrim).sort()
@@ -477,7 +478,7 @@ def main(args):
         ct = datetime.datetime.now()
         print("[{}] identifying potential eccDNA regions by depth\n[{}] creating a BAM file".format(ct, ct), flush=True)
 
-        cmd = "minimap2 -t {} --no-long-join -a {} {} | samtools sort -o {}/ref_aln.bam; samtools index {}/ref_aln.bam".format(threads, fref, fastaName, tmpDir, tmpDir)
+        cmd = "minimap2 -t {} --no-long-join --split-prefix {}/ref_aln -a {} {} | samtools sort -o {}/ref_aln.bam; samtools index -c {}/ref_aln.bam".format(threads, tmpDir, fref, fastaName, tmpDir, tmpDir)
         process = subprocess.call(cmd, shell=True)
 
         ct = datetime.datetime.now()
@@ -500,6 +501,7 @@ def main(args):
 
         chunk_size = 10**7
         for df in pd.read_csv(mosdepth_region_bed_gz_path, compression='gzip', sep='\t', header=None, chunksize=chunk_size):
+            df[0] = df[0].astype(str)
             df[4] = df[0].apply(lambda x: dict_chrom_avg_depth.get(x, 0.0))
             l1 = df[3] >= df[4]
             l2 = df[0].isin(dict_chrom_avg_depth.keys())
@@ -507,6 +509,9 @@ def main(args):
             
             if len(filtered_df) > 0:
                 filtered_df.to_csv(filtered_region_depth_path, mode='a', sep='\t', header=None, index=None)
+
+        if not os.path.exists(filtered_region_depth_path) or os.path.getsize(filtered_region_depth_path) == 0:
+            sys.exit("[ABORT] no potential merge region was detected\n")
 
         filtered_region_depth_bed = bt.BedTool(filtered_region_depth_path).sort()
         merged_filtered_region_depth = filtered_region_depth_bed.merge()
@@ -543,6 +548,9 @@ def main(args):
         sub_breaks2x_bed = merged_filtered_region_depth.subtract(break_min2x_merge_bed)
 
         merged_window = sub_breaks2x_bed.window(break_min2x_merge_bed, w=1)
+
+        if not os.path.exists(merged_window.fn) or os.path.getsize(merged_window.fn) == 0:
+            sys.exit("[ABORT] no potential merge region was detected\n")
 
         df_count_merged_window = merged_window.groupby(g=[1, 2, 3], c=4, o=['count']).to_dataframe()
         df_count_merged_window = df_count_merged_window[df_count_merged_window['name'] > 1]

@@ -43,7 +43,7 @@ def readEccData(fname):
     for idx, value in ecc.iterrows():
         merge_region = value['merge_region']
         merge_len = value['merge_len']
-        eccdna_status = value['eccdna_status']
+        eccdna_status = value['consensus_status']
         id_ = value['id']
 
         for mrow in merge_region.split(","):
@@ -432,7 +432,7 @@ def main(args):
             id_ = value['id']
             seqSize = value['region_size']
             eccSize = value['merge_len']
-            eccdna_status = value['eccdna_status']
+            eccdna_status = value['consensus_status']
             freq = value['freq']
             
             if counter % iter_ == 0:
@@ -505,7 +505,7 @@ def main(args):
 
         merge_len = df_identify[df_identify['id'] == id_]['merge_len'].values[0]
         num_region = df_identify[df_identify['id'] == id_]['num_region'].values[0]
-        eccdna_status = df_identify[df_identify['id'] == id_]['eccdna_status'].values[0]
+        eccdna_status = df_identify[df_identify['id'] == id_]['consensus_status'].values[0]
 
         variant_path = "{}/{}/{}_variant.vcf".format(assemGraph, id_, id_)
         if os.path.isfile(variant_path):
